@@ -1,6 +1,7 @@
 -- Run this in your Supabase SQL Editor (https://supabase.com/dashboard/project/_/sql)
--- to add dedicated columns for the reporter's name and contact details.
+-- to add dedicated columns for the reporter's name, contact details, and item photos.
 
 ALTER TABLE items 
 ADD COLUMN IF NOT EXISTS reporter_name TEXT,
-ADD COLUMN IF NOT EXISTS contact_info TEXT;
+ADD COLUMN IF NOT EXISTS contact_info TEXT,
+ADD COLUMN IF NOT EXISTS image_url TEXT;

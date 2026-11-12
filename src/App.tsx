@@ -13,6 +13,7 @@ import {
   User,
   Phone,
   Mail,
+  Camera,
 } from 'lucide-react'
 import CatMeme from './CatMeme'
 
@@ -40,6 +41,48 @@ const categories = [
   'Personal items',
 ]
 
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX_WIDTH = 800
+        const MAX_HEIGHT = 800
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width
+            width = MAX_WIDTH
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height
+            height = MAX_HEIGHT
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(event.target?.result as string)
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      }
+      img.onerror = reject
+      img.src = event.target?.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 function App() {
   const [items, setItems] = useState<Item[]>([])
   const [search, setSearch] = useState('')
@@ -55,6 +98,8 @@ function App() {
   const [itemDescription, setItemDescription] = useState('')
   const [reporterName, setReporterName] = useState('')
   const [contactInfo, setContactInfo] = useState('')
+  const [itemImage, setItemImage] = useState('')
+  const [imageLoading, setImageLoading] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
@@ -86,17 +131,43 @@ function App() {
     }
   }, [user, showReport])
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, or WEBP).')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size exceeds 5MB. Please choose a smaller photo.')
+      return
+    }
+
+    try {
+      setImageLoading(true)
+      const compressed = await compressImage(file)
+      setItemImage(compressed)
+    } catch (err) {
+      console.error('Failed to process image:', err)
+      alert('Could not process this image. Please try another one.')
+    } finally {
+      setImageLoading(false)
+    }
+  }
+
   const loadItems = async () => {
     setIsLoading(true)
 
     let { data, error } = await supabase
       .from('items')
-      .select('id, title, description, category, location, type, created_at, reporter_name, contact_info')
+      .select('id, title, description, category, location, type, created_at, reporter_name, contact_info, image_url')
       .eq('status', 'open')
       .order('created_at', { ascending: false })
 
-    // If reporter_name or contact_info columns don't exist yet in Supabase schema, fallback cleanly
-    if (error && (error.message.includes('reporter_name') || error.message.includes('contact_info') || error.message.includes('column'))) {
+    // If image_url, reporter_name or contact_info columns don't exist yet in Supabase schema, fallback cleanly
+    if (error && (error.message.includes('image_url') || error.message.includes('reporter_name') || error.message.includes('contact_info') || error.message.includes('column'))) {
       const fallback = await supabase
         .from('items')
         .select('id, title, description, category, location, type, created_at')
@@ -116,6 +187,16 @@ function App() {
       let description = item.description ?? ''
       let repName = item.reporter_name
       let contact = item.contact_info
+      let img = item.image_url
+
+      // Parse fallback format if image was embedded in description
+      if (!img) {
+        const imgMatch = description.match(/\[Image: (.*?)\]/)
+        if (imgMatch) {
+          img = imgMatch[1]
+          description = description.replace(/\n\n\[Image: .*?\]/, '').replace(/\[Image: .*?\]/, '')
+        }
+      }
 
       // Parse fallback format if reporter details were embedded in description
       if (!repName && !contact) {
@@ -123,13 +204,14 @@ function App() {
         if (contactMatch) {
           repName = contactMatch[1] !== 'Anonymous' ? contactMatch[1] : undefined
           contact = contactMatch[2] !== 'N/A' ? contactMatch[2] : undefined
-          description = description.replace(/\n\n\[Reported by: .*? \| Contact: .*?\]/, '')
+          description = description.replace(/\n\n\[Reported by: .*? \| Contact: .*?\]/, '').replace(/\[Reported by: .*? \| Contact: .*?\]/, '')
         }
       }
 
       return {
         id: item.id,
         name: item.title,
+        image: img,
         description,
         category: item.category,
         location: item.location,
@@ -227,17 +309,26 @@ function App() {
         reporter_name: reporterName.trim(),
         contact_info: contactInfo.trim(),
       }
+      if (itemImage) {
+        payload.image_url = itemImage
+      }
 
       const { error } = await supabase.from('items').insert(payload)
 
       if (error) {
         // If columns don't exist yet in Supabase schema, safely fallback to embedding in description
         if (
+          error.message.includes('image_url') ||
           error.message.includes('reporter_name') ||
           error.message.includes('contact_info') ||
           error.message.includes('column')
         ) {
-          const fallbackDesc = `${itemDescription.trim()}\n\n[Reported by: ${reporterName.trim()} | Contact: ${contactInfo.trim()}]`
+          let fallbackDesc = itemDescription.trim()
+          if (itemImage) {
+            fallbackDesc += `\n\n[Image: ${itemImage}]`
+          }
+          fallbackDesc += `\n\n[Reported by: ${reporterName.trim()} | Contact: ${contactInfo.trim()}]`
+
           const { error: fallbackError } = await supabase.from('items').insert({
             title: itemName.trim(),
             description: fallbackDesc,
@@ -259,6 +350,7 @@ function App() {
       setItemDescription('')
       setReporterName('')
       setContactInfo('')
+      setItemImage('')
       setShowReport(false)
       setCategory('All items')
       setType('All')
@@ -497,11 +589,19 @@ function App() {
         className="group overflow-hidden rounded-2xl border border-[#C8D9E6] bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#2F4156]/10"
       >
         <div
-          className="relative flex h-44 items-center justify-center border-b border-[#C8D9E6]/60 bg-[#E3EDF4] transition duration-200 group-hover:bg-[#D8E6F0]"
+          className="relative flex h-48 items-center justify-center overflow-hidden border-b border-[#C8D9E6]/60 bg-[#E3EDF4] transition duration-200 group-hover:bg-[#D8E6F0]"
         >
-          <span className="text-7xl transition duration-300 group-hover:scale-110">
-            {item.emoji}
-          </span>
+          {item.image ? (
+            <img
+              src={item.image}
+              alt={item.name}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <span className="text-7xl transition duration-300 group-hover:scale-110">
+              {item.emoji}
+            </span>
+          )}
 
           <span
             className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${
@@ -714,7 +814,7 @@ function App() {
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
     <form
       onSubmit={handleReportSubmit}
-      className="w-full max-w-lg rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
+      className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
     >
       <div className="mb-5 flex items-center justify-between">
         <h2 className="text-xl font-bold text-[#2F4156]">
@@ -808,6 +908,57 @@ function App() {
           />
         </div>
 
+        {/* Optional Photo Upload */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-semibold text-[#2F4156]">
+              Photo
+            </label>
+            <span className="text-xs text-[#567C8D]">Optional</span>
+          </div>
+
+          {itemImage ? (
+            <div className="relative overflow-hidden rounded-xl border border-[#C8D9E6] bg-[#E3EDF4]">
+              <img
+                src={itemImage}
+                alt="Selected item"
+                className="h-44 w-full object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => setItemImage('')}
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#2F4156]/80 text-white backdrop-blur transition hover:bg-[#2F4156]"
+                title="Remove photo"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <label
+              htmlFor="item-photo-upload"
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#C8D9E6] bg-[#F5EFEB] p-5 text-center transition hover:border-[#567C8D] hover:bg-[#E3EDF4]/60 ${
+                imageLoading ? 'opacity-50' : ''
+              }`}
+            >
+              <Camera size={26} className="mb-2 text-[#567C8D]" />
+              <p className="text-sm font-semibold text-[#2F4156]">
+                {imageLoading ? 'Processing photo...' : 'Add a photo of the item'}
+              </p>
+              <p className="mt-1 text-xs text-[#567C8D]">
+                PNG, JPG or WEBP (up to 5MB, optional)
+              </p>
+              <input
+                id="item-photo-upload"
+                type="file"
+                accept="image/*"
+                disabled={imageLoading}
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
@@ -842,7 +993,7 @@ function App() {
 
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={isLoading || imageLoading}
         className="mt-6 w-full rounded-xl bg-[#2F4156] py-3 font-bold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A] disabled:opacity-50"
       >
         {isLoading ? 'Submitting...' : 'Submit report'}

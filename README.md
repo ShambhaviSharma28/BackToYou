@@ -1,75 +1,85 @@
-# React + TypeScript + Vite
+# 💜 BackToYou — Campus Lost & Found Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A campus-focused Lost & Found platform built for the **Newton School of Technology** community.
 
-Currently, two official plugins are available:
+BackToYou helps students report lost belongings, share found items, and reconnect people with their missing possessions.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- **User Authentication** — Sign up, sign in, and sign out.
+- **Report Lost Items** — Publish details of missing belongings.
+- **Report Found Items** — Help others find their belongings.
+- **Campus Item Board** — Browse reports submitted by the community.
+- **Search & Filters** — Find items by name, location, category, or status.
+- **Item Details** — View descriptions, categories, locations, and report dates.
+- **Database Persistence** — Reports are stored using Supabase and remain available after refreshing.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+| Technology | Purpose |
+|---|---|
+| React | User interface |
+| TypeScript | Type-safe development |
+| Vite | Development and build tooling |
+| Tailwind CSS | Styling |
+| Supabase | Authentication and database |
+| Lucide React | Icons |
+| Git & GitHub | Version control |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Run Locally
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 1. Clone the repository
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+git clone https://github.com/ShambhaviSharma28/BackToYou.git
+cd BackToYou
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
 ```
+
+### 3. Configure environment variables
+
+Create a `.env` file in the project root:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+Use your own Supabase project credentials. Never commit your `.env` file.
+
+### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+### 5. Create a production build
+
+```bash
+npm run build
+```
+
+## 🔮 Future Improvements
+
+- Item photo uploads using Supabase Storage.
+- Claim and recovery request workflow.
+- User profiles and report management.
+- Improved ownership verification.
+- Public deployment for campus-wide access.
+
+## 👩‍💻 Built By
+
+**Shambhavi Sharma**
+
+First-year B.Tech CSE (AI & ML) student.
+
+Built as a project to explore full-stack web development and solve a real campus problem.
+
+---
+
+*Helping lost belongings find their way back. 💜*

@@ -14,6 +14,8 @@ import {
   Phone,
   Mail,
   Camera,
+  CheckCircle2,
+  Check,
 } from 'lucide-react'
 import CatMeme from './CatMeme'
 
@@ -30,6 +32,8 @@ type Item = {
   color: string
   reporterName?: string
   contactInfo?: string
+  createdBy?: string
+  status?: string
 }
 
 const categories = [
@@ -108,13 +112,22 @@ function App() {
   const [password, setPassword] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [recoveringId, setRecoveringId] = useState<string | number | null>(null)
+  const [showRecoveredCelebration, setShowRecoveredCelebration] = useState(false)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
+      const currentUser = data.session?.user ?? null
+      setUser(currentUser)
+      loadItems(currentUser)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => setUser(session?.user ?? null)
+      (_event, session) => {
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        loadItems(currentUser)
+      }
     )
 
     return () => listener.subscription.unsubscribe()
@@ -157,24 +170,41 @@ function App() {
     }
   }
 
-  const loadItems = async () => {
+  const loadItems = async (currentUser = user) => {
     setIsLoading(true)
 
+    // 1. Fetch open items for the public board
     let { data, error } = await supabase
       .from('items')
-      .select('id, title, description, category, location, type, created_at, reporter_name, contact_info, image_url')
+      .select('id, title, description, category, location, type, created_at, reporter_name, contact_info, image_url, created_by, status')
       .eq('status', 'open')
       .order('created_at', { ascending: false })
 
     // If image_url, reporter_name or contact_info columns don't exist yet in Supabase schema, fallback cleanly
-    if (error && (error.message.includes('image_url') || error.message.includes('reporter_name') || error.message.includes('contact_info') || error.message.includes('column'))) {
+    if (
+      error &&
+      (error.message.includes('image_url') ||
+        error.message.includes('reporter_name') ||
+        error.message.includes('contact_info') ||
+        error.message.includes('column'))
+    ) {
       const fallback = await supabase
         .from('items')
-        .select('id, title, description, category, location, type, created_at')
+        .select('id, title, description, category, location, type, created_at, created_by, status')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
       data = fallback.data as any
       error = fallback.error
+    }
+
+    if (error && error.message.includes('column')) {
+      const basicFallback = await supabase
+        .from('items')
+        .select('id, title, description, category, location, type, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+      data = basicFallback.data as any
+      error = basicFallback.error
     }
 
     if (error) {
@@ -183,7 +213,31 @@ function App() {
       return
     }
 
-    const formattedItems: Item[] = (data ?? []).map((item: any) => {
+    let allFetchedItems = (data ?? []) as any[]
+
+    // 2. If user is logged in, also fetch user's own recovered items so they can track them in "My Reports"
+    if (currentUser?.id) {
+      try {
+        const { data: userRecovered } = await supabase
+          .from('items')
+          .select('id, title, description, category, location, type, created_at, reporter_name, contact_info, image_url, created_by, status')
+          .eq('created_by', currentUser.id)
+          .eq('status', 'recovered')
+
+        if (userRecovered && userRecovered.length > 0) {
+          const existingIds = new Set(allFetchedItems.map((i: any) => i.id))
+          for (const item of userRecovered) {
+            if (!existingIds.has(item.id)) {
+              allFetchedItems.push(item)
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch user recovered items:', e)
+      }
+    }
+
+    const formattedItems: Item[] = allFetchedItems.map((item: any) => {
       let description = item.description ?? ''
       let repName = item.reporter_name
       let contact = item.contact_info
@@ -225,6 +279,8 @@ function App() {
         color: 'bg-purple-100',
         reporterName: repName,
         contactInfo: contact,
+        createdBy: item.created_by,
+        status: item.status || 'open',
       }
     })
 
@@ -232,9 +288,60 @@ function App() {
     setIsLoading(false)
   }
 
-  useEffect(() => {
-    loadItems()
-  }, [])
+  const isReporter = (item: Item) => {
+    if (!user) return false
+    if (item.createdBy && item.createdBy === user.id) return true
+    if (
+      item.contactInfo &&
+      user.email &&
+      item.contactInfo.trim().toLowerCase() === user.email.trim().toLowerCase()
+    ) {
+      return true
+    }
+    return false
+  }
+
+  const handleMarkAsRecovered = async (item: Item) => {
+    if (!user) {
+      setShowReport(false)
+      setShowItemDetails(false)
+      setAuthMode('login')
+      setShowAuth(true)
+      setMessage('Please sign in to manage your reported items.')
+      return
+    }
+
+    if (!isReporter(item)) {
+      alert('Only the person who reported this item can mark it as recovered.')
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Mark "${item.name}" as recovered?\n\nThis will remove it from the public campus board, safely archive it in the database, and prevent further claims.`
+    )
+    if (!confirmed) return
+
+    setRecoveringId(item.id)
+    try {
+      const { error } = await supabase
+        .from('items')
+        .update({ status: 'recovered' })
+        .eq('id', item.id)
+
+      if (error) {
+        throw error
+      }
+
+      setShowItemDetails(false)
+      setShowRecoveredCelebration(true)
+      await loadItems(user)
+    } catch (err: any) {
+      console.error('Failed to mark item as recovered:', err)
+      alert(err?.message || 'Could not update item status. Please try again.')
+    } finally {
+      setRecoveringId(null)
+    }
+  }
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -272,6 +379,8 @@ function App() {
       return
     }
     setUser(null)
+    setType('All')
+    loadItems(null)
   }
 
   const handleReportSubmit = async (e: React.FormEvent) => {
@@ -366,6 +475,17 @@ function App() {
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      // Remove recovered items from the public board views ('All', 'Lost', 'Found')
+      if (type !== 'My Reports' && item.status === 'recovered') {
+        return false
+      }
+
+      if (type === 'My Reports') {
+        if (!isReporter(item)) return false
+      } else if (type !== 'All') {
+        if (item.type !== type) return false
+      }
+
       const matchesSearch =
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.location.toLowerCase().includes(search.toLowerCase())
@@ -373,11 +493,9 @@ function App() {
       const matchesCategory =
         category === 'All items' || item.category === category
 
-      const matchesType = type === 'All' || item.type === type
-
-      return matchesSearch && matchesCategory && matchesType
+      return matchesSearch && matchesCategory
     })
-  }, [items, search, category, type])
+  }, [items, search, category, type, user])
 
   return (
     <div className="min-h-screen bg-[#F8FAFF] text-[#24324A]">
@@ -398,7 +516,7 @@ function App() {
             </div>
           </a>
 
-          <div className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
+          <div className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
             <a href="#browse" className="transition hover:text-blue-600">
               Browse items
             </a>
@@ -412,9 +530,24 @@ function App() {
               Report an item
             </button>
             {user ? (
-              <button onClick={handleLogout} className="rounded-xl border border-slate-200 px-4 py-2.5 hover:bg-slate-50">
-                Sign out
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setType('My Reports')}
+                  className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                    type === 'My Reports'
+                      ? 'bg-[#2F4156] text-white shadow-sm'
+                      : 'border border-[#C8D9E6] text-[#2F4156] hover:bg-[#F5EFEB]'
+                  }`}
+                >
+                  My Reports
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-xl border border-slate-200 px-4 py-2 hover:bg-slate-50 text-xs font-medium text-slate-700"
+                >
+                  Sign out
+                </button>
+              </div>
             ) : (
               <button onClick={() => { setAuthMode('login'); setShowAuth(true) }} className="rounded-xl border border-blue-200 px-4 py-2.5 text-blue-600 hover:bg-blue-50">
                 Sign in
@@ -494,15 +627,17 @@ function App() {
               THE CAMPUS BOARD
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-              Recently reported items
+              {type === 'My Reports' ? 'Your reported items' : 'Recently reported items'}
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Browse items reported by your campus community.
+              {type === 'My Reports'
+                ? 'Manage items you have reported and mark them as recovered.'
+                : 'Browse items reported by your campus community.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 rounded-xl border border-[#C8D9E6] bg-white p-1 shadow-sm">
-            {['All', 'Lost', 'Found'].map((value) => (
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#C8D9E6] bg-white p-1 shadow-sm">
+            {['All', 'Lost', 'Found', ...(user ? ['My Reports'] : [])].map((value) => (
               <button
                 key={value}
                 onClick={() => setType(value)}
@@ -586,74 +721,110 @@ function App() {
     {filteredItems.map((item) => (
       <article
         key={item.id}
-        className="group overflow-hidden rounded-2xl border border-[#C8D9E6] bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#2F4156]/10"
+        className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-[#C8D9E6] bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#2F4156]/10"
       >
-        <div
-          className="relative flex h-48 items-center justify-center overflow-hidden border-b border-[#C8D9E6]/60 bg-[#E3EDF4] transition duration-200 group-hover:bg-[#D8E6F0]"
-        >
-          {item.image ? (
-            <img
-              src={item.image}
-              alt={item.name}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <span className="text-7xl transition duration-300 group-hover:scale-110">
-              {item.emoji}
-            </span>
-          )}
-
-          <span
-            className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${
-              item.type === 'Lost'
-                ? 'border border-[#C05638]/30 bg-[#FDF0EC] text-[#C05638]'
-                : 'border border-[#567C8D]/30 bg-white text-[#567C8D]'
-            }`}
+        <div>
+          <div
+            className="relative flex h-48 items-center justify-center overflow-hidden border-b border-[#C8D9E6]/60 bg-[#E3EDF4] transition duration-200 group-hover:bg-[#D8E6F0]"
           >
-            {item.type}
-          </span>
-        </div>
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={item.name}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <span className="text-7xl transition duration-300 group-hover:scale-110">
+                {item.emoji}
+              </span>
+            )}
 
-        <div className="p-5">
-          <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="text-lg font-bold text-[#2F4156]">
-              {item.name}
-            </h3>
-
-            <span className="shrink-0 rounded-md border border-[#C8D9E6] bg-[#F5EFEB] px-2 py-1 text-[10px] font-bold text-[#567C8D]">
-              {item.category}
-            </span>
+            {item.status === 'recovered' ? (
+              <span className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm">
+                <CheckCircle2 size={13} className="text-emerald-600" />
+                Recovered
+              </span>
+            ) : (
+              <span
+                className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${
+                  item.type === 'Lost'
+                    ? 'border border-[#C05638]/30 bg-[#FDF0EC] text-[#C05638]'
+                    : 'border border-[#567C8D]/30 bg-white text-[#567C8D]'
+                }`}
+              >
+                {item.type}
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-[#567C8D]">
-            <MapPin size={15} />
-            {item.location}
-          </div>
+          <div className="p-5 pb-0">
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <h3 className="text-lg font-bold text-[#2F4156]">
+                {item.name}
+              </h3>
 
-          {item.reporterName && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-[#567C8D]">
-              <User size={13} className="text-[#567C8D]" />
-              <span>
-                Reported by <strong className="font-semibold text-[#2F4156]">{item.reporterName}</strong>
+              <span className="shrink-0 rounded-md border border-[#C8D9E6] bg-[#F5EFEB] px-2 py-1 text-[10px] font-bold text-[#567C8D]">
+                {item.category}
               </span>
             </div>
-          )}
 
-          <div className="mt-3 flex items-center justify-between border-t border-[#C8D9E6]/60 pt-4">
+            <div className="flex items-center gap-2 text-sm text-[#567C8D]">
+              <MapPin size={15} />
+              {item.location}
+            </div>
+
+            {item.reporterName && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-[#567C8D]">
+                <User size={13} className="text-[#567C8D]" />
+                <span>
+                  Reported by <strong className="font-semibold text-[#2F4156]">{item.reporterName}</strong>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-5 pt-3">
+          <div className="flex items-center justify-between border-t border-[#C8D9E6]/60 pt-4">
             <span className="flex items-center gap-1.5 text-xs text-[#567C8D]">
               <Clock3 size={14} />
               {item.date}
             </span>
 
-            <button
-              onClick={() => {
-                setSelectedItem(item)
-                setShowItemDetails(true)
-              }}
-              className="flex items-center gap-1 text-xs font-semibold text-[#567C8D] hover:text-[#2F4156] transition"
-            >
-              View details <ArrowRight size={14} />
-            </button>
+            <div className="flex items-center gap-2">
+              {item.status !== 'recovered' && isReporter(item) && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleMarkAsRecovered(item)
+                  }}
+                  disabled={recoveringId === item.id}
+                  className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition shadow-sm"
+                  title="Mark this item as recovered"
+                >
+                  <CheckCircle2 size={13} className="text-emerald-600" />
+                  <span>{recoveringId === item.id ? 'Saving...' : 'Mark Recovered'}</span>
+                </button>
+              )}
+
+              {item.status === 'recovered' && (
+                <span className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  <Check size={12} className="text-emerald-600" />
+                  Archived
+                </span>
+              )}
+
+              <button
+                onClick={() => {
+                  setSelectedItem(item)
+                  setShowItemDetails(true)
+                }}
+                className="flex items-center gap-1 text-xs font-semibold text-[#567C8D] hover:text-[#2F4156] transition"
+              >
+                View details <ArrowRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </article>
@@ -1042,7 +1213,14 @@ function App() {
 
             <div className="space-y-3 text-sm text-[#567C8D]">
               <p>
-                <strong className="text-[#2F4156]">Status:</strong> {selectedItem.type}
+                <strong className="text-[#2F4156]">Status:</strong>{' '}
+                {selectedItem.status === 'recovered' ? (
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
+                    <CheckCircle2 size={14} className="text-emerald-600" /> Recovered & Closed
+                  </span>
+                ) : (
+                  selectedItem.type
+                )}
               </p>
               <p>
                 <strong className="text-[#2F4156]">Category:</strong> {selectedItem.category}
@@ -1055,77 +1233,145 @@ function App() {
               </p>
             </div>
 
-            {/* Reporter details card */}
-            <div className="mt-5 rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#567C8D]">
-                {selectedItem.type === 'Found' ? 'Found & Reported By' : 'Lost & Reported By'}
-              </p>
-              <div className="mt-2.5 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-[#2F4156]">
-                  <User size={15} className="text-[#567C8D]" />
-                  <span>
-                    <strong className="text-[#567C8D]">Name:</strong>{' '}
-                    {selectedItem.reporterName || 'Anonymous / Not specified'}
-                  </span>
+            {/* If item is marked as recovered: prevent further claims & show closed message */}
+            {selectedItem.status === 'recovered' ? (
+              <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4">
+                <div className="flex items-center gap-2 font-bold text-emerald-900 text-sm">
+                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
+                  <span>Item Recovered & Archived</span>
                 </div>
-                {selectedItem.contactInfo && (
+                <p className="mt-1.5 text-xs text-emerald-800 leading-relaxed">
+                  This item has been successfully recovered and safely archived in the database.
+                  All claims and inquiries on this record are permanently closed to prevent duplicate claims.
+                </p>
+              </div>
+            ) : (
+              /* If item is open: display reporter details card */
+              <div className="mt-5 rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#567C8D]">
+                  {selectedItem.type === 'Found' ? 'Found & Reported By' : 'Lost & Reported By'}
+                </p>
+                <div className="mt-2.5 space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-[#2F4156]">
-                    {selectedItem.contactInfo.includes('@') ? (
-                      <Mail size={15} className="text-[#567C8D]" />
-                    ) : (
-                      <Phone size={15} className="text-[#567C8D]" />
-                    )}
+                    <User size={15} className="text-[#567C8D]" />
                     <span>
-                      <strong className="text-[#567C8D]">Contact:</strong>{' '}
-                      <span className="font-medium text-[#2F4156]">{selectedItem.contactInfo}</span>
+                      <strong className="text-[#567C8D]">Name:</strong>{' '}
+                      {selectedItem.reporterName || 'Anonymous / Not specified'}
                     </span>
+                  </div>
+                  {selectedItem.contactInfo && (
+                    <div className="flex items-center gap-2 text-[#2F4156]">
+                      {selectedItem.contactInfo.includes('@') ? (
+                        <Mail size={15} className="text-[#567C8D]" />
+                      ) : (
+                        <Phone size={15} className="text-[#567C8D]" />
+                      )}
+                      <span>
+                        <strong className="text-[#567C8D]">Contact:</strong>{' '}
+                        <span className="font-medium text-[#2F4156]">{selectedItem.contactInfo}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {selectedItem.contactInfo && (
+                  <div className="mt-4 flex gap-2">
+                    {selectedItem.contactInfo.includes('@') ? (
+                      <a
+                        href={`mailto:${selectedItem.contactInfo}?subject=${encodeURIComponent(
+                          `BackToYou: Regarding "${selectedItem.name}"`
+                        )}`}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2F4156] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E2B3A]"
+                      >
+                        <Mail size={14} /> Send Email
+                      </a>
+                    ) : (
+                      <>
+                        <a
+                          href={`tel:${selectedItem.contactInfo}`}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2F4156] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E2B3A]"
+                        >
+                          <Phone size={14} /> Call
+                        </a>
+                        <a
+                          href={`https://wa.me/${selectedItem.contactInfo.replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#567C8D]/40 bg-white px-4 py-2.5 text-xs font-bold text-[#567C8D] transition hover:bg-[#DCE8EF]"
+                        >
+                          WhatsApp
+                        </a>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
+            )}
 
-              {selectedItem.contactInfo && (
-                <div className="mt-4 flex gap-2">
-                  {selectedItem.contactInfo.includes('@') ? (
-                    <a
-                      href={`mailto:${selectedItem.contactInfo}?subject=${encodeURIComponent(
-                        `BackToYou: Regarding "${selectedItem.name}"`
-                      )}`}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2F4156] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E2B3A]"
+            {/* Reporter Action: Mark as Recovered */}
+            {selectedItem.status !== 'recovered' && isReporter(selectedItem) && (
+              <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                    <CheckCircle2 size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                      Reporter Action
+                    </p>
+                    <h4 className="mt-0.5 text-sm font-bold text-emerald-950">
+                      Has this item been returned or found?
+                    </h4>
+                    <p className="mt-1 text-xs text-emerald-700 leading-relaxed">
+                      Mark as recovered to celebrate the reunion, remove it from the public campus board, and safely archive it in the database.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleMarkAsRecovered(selectedItem)}
+                      disabled={recoveringId === selectedItem.id}
+                      className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      <Mail size={14} /> Send Email
-                    </a>
-                  ) : (
-                    <>
-                      <a
-                        href={`tel:${selectedItem.contactInfo}`}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2F4156] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E2B3A]"
-                      >
-                        <Phone size={14} /> Call
-                      </a>
-                      <a
-                        href={`https://wa.me/${selectedItem.contactInfo.replace(/[^0-9]/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#567C8D]/40 bg-white px-4 py-2.5 text-xs font-bold text-[#567C8D] transition hover:bg-[#DCE8EF]"
-                      >
-                        WhatsApp
-                      </a>
-                    </>
-                  )}
+                      <CheckCircle2 size={15} />
+                      {recoveringId === selectedItem.id ? 'Marking as recovered...' : 'Mark as Recovered'}
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-            
+              </div>
+            )}
 
             <button
               onClick={() => setShowItemDetails(false)}
-              className="mt-7 w-full rounded-xl bg-[#2F4156] py-3 font-semibold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A]"
+              className="mt-6 w-full rounded-xl bg-[#2F4156] py-3 font-semibold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A]"
             >
               Close
             </button>
-</div>
           </div>
+        </div>
+      )}
 
+      {/* Recovered celebration dialog */}
+      {showRecoveredCelebration && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2F4156]/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/20 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-sm">
+              <CheckCircle2 size={32} />
+            </div>
+
+            <CatMeme situation="recovered" />
+
+            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800 leading-relaxed">
+              ✨ <strong>Item marked as recovered!</strong> It has been removed from the public campus board, safely preserved in the database archive, and further claims have been disabled.
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowRecoveredCelebration(false)}
+              className="mt-5 w-full rounded-xl bg-[#2F4156] py-3 text-sm font-bold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A]"
+            >
+              Back to Campus Board
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

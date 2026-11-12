@@ -197,3 +197,23 @@ input:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
+
+/* SLEEK SCROLLBAR FOR MODALS & SCROLL CONTAINERS */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8D9E6;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #567C8D;
+}
+

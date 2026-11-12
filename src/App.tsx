@@ -910,10 +910,10 @@ function App() {
 
       {/* Authentication dialog */}
       {showAuth && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4 overflow-y-auto">
           <form
             onSubmit={handleAuth}
-            className="w-full max-w-md rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
+            className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
           >
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-bold text-[#2F4156]">
@@ -982,7 +982,7 @@ function App() {
 
 {/* Report item dialog */}
 {showReport && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4 overflow-y-auto">
     <form
       onSubmit={handleReportSubmit}
       className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
@@ -1175,17 +1175,17 @@ function App() {
 
             {/* Item details dialog */}
       {showItemDetails && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15">
 
-            <div className="mb-6 flex items-center justify-between">
+            <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-5 flex items-center justify-between border-b border-[#C8D9E6]/60 bg-white/95 px-6 py-4 backdrop-blur-sm rounded-t-2xl">
               <h2 className="text-xl font-bold text-[#2F4156]">
                 Item details
               </h2>
 
               <button
                 onClick={() => setShowItemDetails(false)}
-                className="text-[#567C8D] hover:text-[#2F4156]"
+                className="rounded-lg p-1 text-[#567C8D] hover:bg-[#F5EFEB] hover:text-[#2F4156] transition"
                 aria-label="Close details"
               >
                 <X size={22} />
@@ -1351,8 +1351,8 @@ function App() {
 
       {/* Recovered celebration dialog */}
       {showRecoveredCelebration && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2F4156]/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/20 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2F4156]/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/20 text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-sm">
               <CheckCircle2 size={32} />
             </div>

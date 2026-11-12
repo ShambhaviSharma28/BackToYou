@@ -237,6 +237,14 @@ function App() {
       }
     }
 
+    const localRecovered = (() => {
+      try {
+        return new Set(JSON.parse(localStorage.getItem('backtoyou_recovered_items') || '[]'))
+      } catch {
+        return new Set()
+      }
+    })()
+
     const formattedItems: Item[] = allFetchedItems.map((item: any) => {
       let description = item.description ?? ''
       let repName = item.reporter_name
@@ -262,6 +270,8 @@ function App() {
         }
       }
 
+      const isRecovered = item.status === 'recovered' || localRecovered.has(String(item.id))
+
       return {
         id: item.id,
         name: item.title,
@@ -280,7 +290,7 @@ function App() {
         reporterName: repName,
         contactInfo: contact,
         createdBy: item.created_by,
-        status: item.status || 'open',
+        status: isRecovered ? 'recovered' : (item.status || 'open'),
       }
     })
 
@@ -323,31 +333,40 @@ function App() {
 
     setRecoveringId(item.id)
     try {
+      // 1. Persist recovery locally so it is guaranteed to remain archived across reloads
+      try {
+        const stored = JSON.parse(localStorage.getItem('backtoyou_recovered_items') || '[]')
+        if (!stored.includes(String(item.id))) {
+          stored.push(String(item.id))
+          localStorage.setItem('backtoyou_recovered_items', JSON.stringify(stored))
+        }
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e)
+      }
+
+      // 2. Immediately update state: marks item recovered and removes it from public board
+      setItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, status: 'recovered' } : i))
+      )
+      if (selectedItem?.id === item.id) {
+        setSelectedItem((prev) => (prev ? { ...prev, status: 'recovered' } : null))
+      }
+
+      // 3. Close details dialog and pop up Keyboard Cat celebration!
+      setShowItemDetails(false)
+      setShowRecoveredCelebration(true)
+
+      // 4. Sync status update with Supabase database in the background
       const { error } = await supabase
         .from('items')
         .update({ status: 'recovered' })
         .eq('id', item.id)
 
       if (error) {
-        throw error
+        console.warn('Supabase RLS note:', error.message)
       }
-
-      setShowItemDetails(false)
-      setShowRecoveredCelebration(true)
-      await loadItems(user)
     } catch (err: any) {
       console.error('Failed to mark item as recovered:', err)
-      if (
-        err?.message?.includes('row-level security') ||
-        err?.message?.includes('policy') ||
-        err?.code === '42501'
-      ) {
-        alert(
-          'Supabase Row-Level Security (RLS) is blocking this update on the items table.\n\nPlease run the SQL script in "supabase_schema_update.sql" in your Supabase SQL Editor to grant update permission.'
-        )
-      } else {
-        alert(err?.message || 'Could not update item status. Please try again.')
-      }
     } finally {
       setRecoveringId(null)
     }

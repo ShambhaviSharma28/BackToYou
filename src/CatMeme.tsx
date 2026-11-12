@@ -53,11 +53,11 @@ export default function CatMeme({ situation }: CatMemeProps) {
         className="w-52 h-52 object-contain rounded-2xl mb-5"
       />
 
-      <h2 className="text-xl font-bold text-[#F5F5F0] mb-2">
+      <h2 className="text-xl font-bold text-[#2F4156] mb-2">
         {meme.title}
       </h2>
 
-      <p className="text-sm text-[#A5A6A2] max-w-sm">
+      <p className="text-sm text-[#567C8D] max-w-sm">
         {meme.message}
       </p>
     </div>

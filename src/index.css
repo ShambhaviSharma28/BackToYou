@@ -1,27 +1,27 @@
 
 @import "tailwindcss";
 
-/* BACKTOYOU — FOREST EVERGREEN & AMBER PALETTE */
+/* BACKTOYOU — NAVY, TEAL, SKY BLUE & BEIGE PALETTE */
 
 :root {
-  --color-bg: #082019;
-  --color-surface: #0C3B2E;
-  --color-elevated: #144A3B;
+  --color-bg: #F5EFEB;
+  --color-surface: #FFFFFF;
+  --color-elevated: #F5EFEB;
 
-  --color-text: #F5F7F2;
-  --color-muted: #9EBDA5;
+  --color-text: #2F4156;
+  --color-muted: #567C8D;
 
-  --color-accent: #FFBA00;
-  --color-accent-hover: #E5A700;
-  --color-accent-soft: #1E4637;
+  --color-accent: #2F4156;
+  --color-accent-hover: #1E2B3A;
+  --color-accent-soft: #C8D9E6;
 
-  --color-border: #1E5E4B;
+  --color-border: #C8D9E6;
 
-  --color-lost: #BB8A52;
-  --color-lost-bg: #382A18;
+  --color-lost: #C05638;
+  --color-lost-bg: #FDF0EC;
 
-  --color-found: #6D9773;
-  --color-found-bg: #163828;
+  --color-found: #567C8D;
+  --color-found-bg: #DCE8EF;
 
   font-family: Inter, system-ui, sans-serif;
   color: var(--color-text);
@@ -105,20 +105,23 @@ body {
 }
 
 [class~="text-blue-600"],
-[class~="text-blue-700"],
+[class~="text-blue-700"] {
+  color: #567C8D !important;
+}
+
 [class~="text-blue-500"] {
-  color: var(--color-accent) !important;
+  color: var(--color-muted) !important;
 }
 
 /* PRIMARY BUTTONS */
 
 [class~="bg-blue-600"] {
-  color: #0C3B2E !important;
+  color: #FFFFFF !important;
 }
 
 [class~="bg-blue-600"] [class~="text-white"],
 [class~="bg-blue-700"] [class~="text-white"] {
-  color: #0C3B2E !important;
+  color: #FFFFFF !important;
 }
 
 /* STATUS LABELS */

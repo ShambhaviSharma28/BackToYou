@@ -409,15 +409,15 @@ function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 rounded-xl border border-[#1E5E4B] bg-[#0C3B2E] p-1 shadow-sm">
+          <div className="flex items-center gap-1.5 rounded-xl border border-[#C8D9E6] bg-white p-1 shadow-sm">
             {['All', 'Lost', 'Found'].map((value) => (
               <button
                 key={value}
                 onClick={() => setType(value)}
                 className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 ${
                   type === value
-                    ? 'bg-[#FFBA00] text-[#0C3B2E] shadow-sm'
-                    : 'text-[#9EBDA5] hover:bg-[#144A3B] hover:text-[#F5F7F2]'
+                    ? 'bg-[#2F4156] text-white shadow-sm'
+                    : 'text-[#567C8D] hover:bg-[#F5EFEB] hover:text-[#2F4156]'
                 }`}
               >
                 {value === 'All' ? 'All items' : value}
@@ -427,19 +427,19 @@ function App() {
         </div>
 
         {/* Search */}
-        <div className="relative mb-5 flex items-center gap-3 rounded-2xl border border-[#1E5E4B] bg-[#0C3B2E] px-4 py-3.5 shadow-sm transition-all focus-within:border-[#FFBA00] focus-within:ring-2 focus-within:ring-[#FFBA00]/20">
-          <Search className="shrink-0 text-[#9EBDA5]" size={20} />
+        <div className="relative mb-5 flex items-center gap-3 rounded-2xl border border-[#C8D9E6] bg-white px-4 py-3.5 shadow-sm transition-all focus-within:border-[#2F4156] focus-within:ring-2 focus-within:ring-[#C8D9E6]/60">
+          <Search className="shrink-0 text-[#567C8D]" size={20} />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search for an item or location..."
-            className="w-full bg-transparent text-sm text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70"
+            className="w-full bg-transparent text-sm text-[#2F4156] outline-none placeholder:text-[#567C8D]/70"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
               aria-label="Clear search"
-              className="rounded-full p-1 text-[#9EBDA5] transition hover:bg-[#144A3B] hover:text-[#F5F7F2]"
+              className="rounded-full p-1 text-[#567C8D] transition hover:bg-[#F5EFEB] hover:text-[#2F4156]"
             >
               <X size={16} />
             </button>
@@ -456,8 +456,8 @@ function App() {
                 onClick={() => setCategory(value)}
                 className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-150 ${
                   isSelected
-                    ? 'border border-[#FFBA00] bg-[#FFBA00] text-[#0C3B2E] shadow-md shadow-[#FFBA00]/20'
-                    : 'border border-[#1E5E4B] bg-[#0C3B2E] text-[#9EBDA5] hover:border-[#6D9773] hover:bg-[#144A3B] hover:text-[#F5F7F2]'
+                    ? 'border border-[#2F4156] bg-[#2F4156] text-white shadow-md shadow-[#2F4156]/15'
+                    : 'border border-[#C8D9E6] bg-white text-[#567C8D] hover:border-[#567C8D] hover:bg-[#F5EFEB] hover:text-[#2F4156]'
                 }`}
               >
                 {value}
@@ -531,16 +531,16 @@ function App() {
           </div>
 
           {item.reporterName && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-              <User size={13} className="text-slate-400" />
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-[#567C8D]">
+              <User size={13} className="text-[#567C8D]" />
               <span>
-                Reported by <strong className="font-semibold text-slate-700">{item.reporterName}</strong>
+                Reported by <strong className="font-semibold text-[#2F4156]">{item.reporterName}</strong>
               </span>
             </div>
           )}
 
-          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-4">
-            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+          <div className="mt-3 flex items-center justify-between border-t border-[#C8D9E6]/60 pt-4">
+            <span className="flex items-center gap-1.5 text-xs text-[#567C8D]">
               <Clock3 size={14} />
               {item.date}
             </span>
@@ -550,7 +550,7 @@ function App() {
                 setSelectedItem(item)
                 setShowItemDetails(true)
               }}
-              className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+              className="flex items-center gap-1 text-xs font-semibold text-[#567C8D] hover:text-[#2F4156] transition"
             >
               View details <ArrowRight size={14} />
             </button>
@@ -639,19 +639,19 @@ function App() {
 
       {/* Authentication dialog */}
       {showAuth && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
           <form
             onSubmit={handleAuth}
-            className="w-full max-w-md rounded-2xl border border-[#1E5E4B] bg-[#0C3B2E] p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-[#F5F7F2]">
+              <h2 className="text-xl font-bold text-[#2F4156]">
                 {authMode === 'login' ? 'Welcome back' : 'Create your account'}
               </h2>
               <button
                 type="button"
                 onClick={() => setShowAuth(false)}
-                className="text-2xl text-[#9EBDA5] hover:text-white"
+                className="text-2xl text-[#567C8D] hover:text-[#2F4156]"
                 aria-label="Close sign in dialog"
               >
                 ×
@@ -665,7 +665,7 @@ function App() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email address"
-                className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+                className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
               />
               <input
                 type="password"
@@ -674,25 +674,25 @@ function App() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password (at least 6 characters)"
-                className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+                className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
               />
             </div>
 
             {message && (
-              <p className="mt-4 text-sm text-[#FFBA00]">{message}</p>
+              <p className="mt-4 text-sm font-medium text-[#C05638]">{message}</p>
             )}
 
             <button
               type="submit"
               disabled={authLoading}
-              className="mt-5 w-full rounded-xl bg-[#FFBA00] py-3 font-bold text-[#0C3B2E] transition hover:bg-[#E5A700] disabled:opacity-50"
+              className="mt-5 w-full rounded-xl bg-[#2F4156] py-3 font-bold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A] disabled:opacity-50"
             >
               {authLoading
                 ? 'Please wait...'
                 : authMode === 'login' ? 'Sign in' : 'Create account'}
             </button>
 
-            <p className="mt-4 text-center text-sm text-[#9EBDA5]">
+            <p className="mt-4 text-center text-sm text-[#567C8D]">
               {authMode === 'login' ? "Don't have an account?" : 'Already registered?'}{' '}
               <button
                 type="button"
@@ -700,7 +700,7 @@ function App() {
                   setAuthMode(authMode === 'login' ? 'signup' : 'login')
                   setMessage('')
                 }}
-                className="font-semibold text-[#FFBA00] hover:underline"
+                className="font-bold text-[#2F4156] hover:underline"
               >
                 {authMode === 'login' ? 'Sign up' : 'Sign in'}
               </button>
@@ -711,25 +711,25 @@ function App() {
 
 {/* Report item dialog */}
 {showReport && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
     <form
       onSubmit={handleReportSubmit}
-      className="w-full max-w-lg rounded-2xl border border-[#1E5E4B] bg-[#0C3B2E] p-6 shadow-2xl"
+      className="w-full max-w-lg rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15"
     >
       <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[#F5F7F2]">
+        <h2 className="text-xl font-bold text-[#2F4156]">
           Report an item
         </h2>
         <button
           type="button"
           onClick={() => setShowReport(false)}
-          className="text-2xl text-[#9EBDA5] hover:text-white"
+          className="text-2xl text-[#567C8D] hover:text-[#2F4156]"
         >
           ×
         </button>
       </div>
 
-      <p className="mb-4 text-sm text-[#9EBDA5]">
+      <p className="mb-4 text-sm text-[#567C8D]">
         Help your campus community reunite with their belongings.
       </p>
 
@@ -742,9 +742,9 @@ function App() {
             className={`rounded-xl border p-3 font-semibold transition ${
               reportType === value
                 ? value === 'Lost'
-                  ? 'border-[#BB8A52] bg-[#382A18] text-[#BB8A52]'
-                  : 'border-[#6D9773] bg-[#163828] text-[#6D9773]'
-                : 'border-[#1E5E4B] text-[#9EBDA5] hover:bg-[#144A3B]'
+                  ? 'border-[#C05638] bg-[#FDF0EC] text-[#C05638]'
+                  : 'border-[#567C8D] bg-[#DCE8EF] text-[#567C8D]'
+                : 'border-[#C8D9E6] text-[#567C8D] hover:bg-[#F5EFEB]'
             }`}
           >
             {value === 'Lost' ? 'I lost something' : 'I found something'}
@@ -754,7 +754,7 @@ function App() {
 
       <div className="space-y-4">
         <div>
-          <label className="mb-2 block text-sm text-[#F5F7F2]">
+          <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
             Item name
           </label>
           <input
@@ -762,18 +762,18 @@ function App() {
             value={itemName}
             onChange={(e) => setItemName(e.target.value)}
             placeholder="e.g. Black backpack"
-            className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+            className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-[#F5F7F2]">
+          <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
             Category
           </label>
           <select
             value={itemCategory}
             onChange={(e) => setItemCategory(e.target.value)}
-            className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none focus:border-[#FFBA00]"
+            className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none focus:border-[#2F4156] focus:bg-white transition"
           >
             {categories.filter((c) => c !== 'All items').map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -782,7 +782,7 @@ function App() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-[#F5F7F2]">
+          <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
             Location
           </label>
           <input
@@ -790,12 +790,12 @@ function App() {
             value={itemLocation}
             onChange={(e) => setItemLocation(e.target.value)}
             placeholder="Where was it lost or found?"
-            className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+            className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-[#F5F7F2]">
+          <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
             Description
           </label>
           <textarea
@@ -804,13 +804,13 @@ function App() {
             onChange={(e) => setItemDescription(e.target.value)}
             placeholder="Describe the item..."
             rows={3}
-            className="w-full resize-none rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+            className="w-full resize-none rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm text-[#F5F7F2]">
+            <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
               Your Name
             </label>
             <input
@@ -818,12 +818,12 @@ function App() {
               value={reporterName}
               onChange={(e) => setReporterName(e.target.value)}
               placeholder="e.g. Alex Sharma"
-              className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+              className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-[#F5F7F2]">
+            <label className="mb-2 block text-sm font-semibold text-[#2F4156]">
               Contact Details
             </label>
             <input
@@ -831,11 +831,11 @@ function App() {
               value={contactInfo}
               onChange={(e) => setContactInfo(e.target.value)}
               placeholder="Phone, WhatsApp, or email"
-              className="w-full rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-3 text-[#F5F7F2] outline-none placeholder:text-[#9EBDA5]/70 focus:border-[#FFBA00]"
+              className="w-full rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-3 text-[#2F4156] outline-none placeholder:text-[#567C8D]/70 focus:border-[#2F4156] focus:bg-white transition"
             />
           </div>
         </div>
-        <p className="text-xs text-[#9EBDA5]">
+        <p className="text-xs text-[#567C8D]">
           This allows students to reach you directly to claim or hand over the item.
         </p>
       </div>
@@ -843,7 +843,7 @@ function App() {
       <button
         type="submit"
         disabled={isLoading}
-        className="mt-6 w-full rounded-xl bg-[#FFBA00] py-3 font-bold text-[#0C3B2E] transition hover:bg-[#E5A700] disabled:opacity-50"
+        className="mt-6 w-full rounded-xl bg-[#2F4156] py-3 font-bold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A] disabled:opacity-50"
       >
         {isLoading ? 'Submitting...' : 'Submit report'}
       </button>
@@ -853,24 +853,24 @@ function App() {
 
             {/* Item details dialog */}
       {showItemDetails && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-[#1E5E4B] bg-[#0C3B2E] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2F4156]/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[#C8D9E6] bg-white p-6 shadow-2xl shadow-[#2F4156]/15">
 
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-[#F5F7F2]">
+              <h2 className="text-xl font-bold text-[#2F4156]">
                 Item details
               </h2>
 
               <button
                 onClick={() => setShowItemDetails(false)}
-                className="text-[#9EBDA5] hover:text-white"
+                className="text-[#567C8D] hover:text-[#2F4156]"
                 aria-label="Close details"
               >
                 <X size={22} />
               </button>
             </div>
 
-            <div className="mb-5 flex h-44 items-center justify-center overflow-hidden rounded-xl bg-[#144A3B]">
+            <div className="mb-5 flex h-44 items-center justify-center overflow-hidden rounded-xl bg-[#F5EFEB]">
   {selectedItem.image ? (
     <img
       src={selectedItem.image}
@@ -882,51 +882,51 @@ function App() {
   )}
 </div>
 
-            <h3 className="mb-3 text-2xl font-bold text-[#F5F7F2]">
+            <h3 className="mb-3 text-2xl font-bold text-[#2F4156]">
               {selectedItem.name}
             </h3>
-            <p className="mb-5 text-sm leading-6 text-[#9EBDA5]">
+            <p className="mb-5 text-sm leading-6 text-[#567C8D]">
   {selectedItem.description}
 </p>
 
-            <div className="space-y-3 text-sm text-[#9EBDA5]">
+            <div className="space-y-3 text-sm text-[#567C8D]">
               <p>
-                <strong className="text-[#F5F7F2]">Status:</strong> {selectedItem.type}
+                <strong className="text-[#2F4156]">Status:</strong> {selectedItem.type}
               </p>
               <p>
-                <strong className="text-[#F5F7F2]">Category:</strong> {selectedItem.category}
+                <strong className="text-[#2F4156]">Category:</strong> {selectedItem.category}
               </p>
               <p>
-                <strong className="text-[#F5F7F2]">Location:</strong> {selectedItem.location}
+                <strong className="text-[#2F4156]">Location:</strong> {selectedItem.location}
               </p>
               <p>
-                <strong className="text-[#F5F7F2]">Reported:</strong> {selectedItem.date}
+                <strong className="text-[#2F4156]">Reported:</strong> {selectedItem.date}
               </p>
             </div>
 
             {/* Reporter details card */}
-            <div className="mt-5 rounded-xl border border-[#1E5E4B] bg-[#144A3B] p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#FFBA00]">
+            <div className="mt-5 rounded-xl border border-[#C8D9E6] bg-[#F5EFEB] p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#567C8D]">
                 {selectedItem.type === 'Found' ? 'Found & Reported By' : 'Lost & Reported By'}
               </p>
               <div className="mt-2.5 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-[#F5F7F2]">
-                  <User size={15} className="text-[#6D9773]" />
+                <div className="flex items-center gap-2 text-[#2F4156]">
+                  <User size={15} className="text-[#567C8D]" />
                   <span>
-                    <strong className="text-[#9EBDA5]">Name:</strong>{' '}
+                    <strong className="text-[#567C8D]">Name:</strong>{' '}
                     {selectedItem.reporterName || 'Anonymous / Not specified'}
                   </span>
                 </div>
                 {selectedItem.contactInfo && (
-                  <div className="flex items-center gap-2 text-[#F5F7F2]">
+                  <div className="flex items-center gap-2 text-[#2F4156]">
                     {selectedItem.contactInfo.includes('@') ? (
-                      <Mail size={15} className="text-[#BB8A52]" />
+                      <Mail size={15} className="text-[#567C8D]" />
                     ) : (
-                      <Phone size={15} className="text-[#BB8A52]" />
+                      <Phone size={15} className="text-[#567C8D]" />
                     )}
                     <span>
-                      <strong className="text-[#9EBDA5]">Contact:</strong>{' '}
-                      <span className="font-medium text-[#F5F7F2]">{selectedItem.contactInfo}</span>
+                      <strong className="text-[#567C8D]">Contact:</strong>{' '}
+                      <span className="font-medium text-[#2F4156]">{selectedItem.contactInfo}</span>
                     </span>
                   </div>
                 )}
@@ -939,7 +939,7 @@ function App() {
                       href={`mailto:${selectedItem.contactInfo}?subject=${encodeURIComponent(
                         `BackToYou: Regarding "${selectedItem.name}"`
                       )}`}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#FFBA00] px-4 py-2.5 text-xs font-bold text-[#0C3B2E] transition hover:bg-[#E5A700]"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2F4156] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E2B3A]"
                     >
                       <Mail size={14} /> Send Email
                     </a>
@@ -947,7 +947,7 @@ function App() {
                     <>
                       <a
                         href={`tel:${selectedItem.contactInfo}`}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#FFBA00] px-4 py-2.5 text-xs font-bold text-[#0C3B2E] transition hover:bg-[#E5A700]"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2F4156] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E2B3A]"
                       >
                         <Phone size={14} /> Call
                       </a>
@@ -955,7 +955,7 @@ function App() {
                         href={`https://wa.me/${selectedItem.contactInfo.replace(/[^0-9]/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#6D9773]/50 bg-[#6D9773]/15 px-4 py-2.5 text-xs font-bold text-[#6D9773] transition hover:bg-[#6D9773]/25"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#567C8D]/40 bg-white px-4 py-2.5 text-xs font-bold text-[#567C8D] transition hover:bg-[#DCE8EF]"
                       >
                         WhatsApp
                       </a>
@@ -968,7 +968,7 @@ function App() {
 
             <button
               onClick={() => setShowItemDetails(false)}
-              className="mt-7 w-full rounded-xl bg-[#FFBA00] py-3 font-semibold text-[#0C3B2E] transition hover:bg-[#E5A700]"
+              className="mt-7 w-full rounded-xl bg-[#2F4156] py-3 font-semibold text-white shadow-md shadow-[#2F4156]/20 transition hover:bg-[#1E2B3A]"
             >
               Close
             </button>

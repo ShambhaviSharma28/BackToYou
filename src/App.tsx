@@ -409,58 +409,61 @@ function App() {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1.5 rounded-xl border border-[#35383D] bg-[#1B1D21] p-1 shadow-sm">
             {['All', 'Lost', 'Found'].map((value) => (
               <button
                 key={value}
                 onClick={() => setType(value)}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 ${
                   type === value
-                    ? 'bg-blue-600 text-white'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-blue-50'
+                    ? 'bg-[#A78BFA] text-[#101113] shadow-sm'
+                    : 'text-[#A5A6A2] hover:bg-[#282B30] hover:text-[#F5F5F0]'
                 }`}
               >
-                {value}
+                {value === 'All' ? 'All items' : value}
               </button>
             ))}
           </div>
         </div>
 
         {/* Search */}
-        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm focus-within:border-blue-400">
-          <Search className="shrink-0 text-slate-400" size={21} />
+        <div className="relative mb-5 flex items-center gap-3 rounded-2xl border border-[#35383D] bg-[#1B1D21] px-4 py-3.5 shadow-sm transition-all focus-within:border-[#A78BFA] focus-within:ring-2 focus-within:ring-[#A78BFA]/20">
+          <Search className="shrink-0 text-[#A5A6A2]" size={20} />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search for an item or location..."
-            className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+            className="w-full bg-transparent text-sm text-[#F5F5F0] outline-none placeholder:text-[#A5A6A2]/70"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
               aria-label="Clear search"
-              className="text-slate-400 hover:text-slate-700"
+              className="rounded-full p-1 text-[#A5A6A2] transition hover:bg-[#282B30] hover:text-[#F5F5F0]"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           )}
         </div>
 
         {/* Categories */}
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-2">
-          {categories.map((value) => (
-            <button
-              key={value}
-              onClick={() => setCategory(value)}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
-                category === value
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {value}
-            </button>
-          ))}
+        <div className="mb-8 flex gap-2.5 overflow-x-auto pb-2">
+          {categories.map((value) => {
+            const isSelected = category === value
+            return (
+              <button
+                key={value}
+                onClick={() => setCategory(value)}
+                className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-150 ${
+                  isSelected
+                    ? 'border border-[#A78BFA] bg-[#A78BFA] text-[#101113] shadow-md shadow-[#A78BFA]/20'
+                    : 'border border-[#35383D] bg-[#1B1D21] text-[#A5A6A2] hover:border-[#A78BFA]/50 hover:bg-[#282B30] hover:text-[#F5F5F0]'
+                }`}
+              >
+                {value}
+              </button>
+            )
+          })}
         </div>
 
         {/* Item cards */}

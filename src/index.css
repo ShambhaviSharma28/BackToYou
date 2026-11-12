@@ -152,6 +152,14 @@ body {
   border-color: var(--color-accent-soft) !important;
 }
 
+/* RINGS */
+
+[class~="ring-slate-100"],
+[class~="ring-slate-200"],
+[class~="ring-slate-300"] {
+  --tw-ring-color: var(--color-border) !important;
+}
+
 /* INPUTS */
 
 input {

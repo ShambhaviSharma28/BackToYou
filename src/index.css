@@ -1,27 +1,27 @@
 
 @import "tailwindcss";
 
-/* BACKTOYOU — MIDNIGHT PURPLE THEME */
+/* BACKTOYOU — FOREST EVERGREEN & AMBER PALETTE */
 
 :root {
-  --color-bg: #101113;
-  --color-surface: #1B1D21;
-  --color-elevated: #282B30;
+  --color-bg: #082019;
+  --color-surface: #0C3B2E;
+  --color-elevated: #144A3B;
 
-  --color-text: #F5F5F0;
-  --color-muted: #A5A6A2;
+  --color-text: #F5F7F2;
+  --color-muted: #9EBDA5;
 
-  --color-accent: #A78BFA;
-  --color-accent-hover: #8B5CF6;
-  --color-accent-soft: #2A2140;
+  --color-accent: #FFBA00;
+  --color-accent-hover: #E5A700;
+  --color-accent-soft: #1E4637;
 
-  --color-border: #35383D;
+  --color-border: #1E5E4B;
 
-  --color-lost: #F08080;
-  --color-lost-bg: #382426;
+  --color-lost: #BB8A52;
+  --color-lost-bg: #382A18;
 
-  --color-found: #78CBA0;
-  --color-found-bg: #20372C;
+  --color-found: #6D9773;
+  --color-found-bg: #163828;
 
   font-family: Inter, system-ui, sans-serif;
   color: var(--color-text);
@@ -113,12 +113,12 @@ body {
 /* PRIMARY BUTTONS */
 
 [class~="bg-blue-600"] {
-  color: #101113 !important;
+  color: #0C3B2E !important;
 }
 
 [class~="bg-blue-600"] [class~="text-white"],
 [class~="bg-blue-700"] [class~="text-white"] {
-  color: #101113 !important;
+  color: #0C3B2E !important;
 }
 
 /* STATUS LABELS */

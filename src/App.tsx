@@ -337,7 +337,17 @@ function App() {
       await loadItems(user)
     } catch (err: any) {
       console.error('Failed to mark item as recovered:', err)
-      alert(err?.message || 'Could not update item status. Please try again.')
+      if (
+        err?.message?.includes('row-level security') ||
+        err?.message?.includes('policy') ||
+        err?.code === '42501'
+      ) {
+        alert(
+          'Supabase Row-Level Security (RLS) is blocking this update on the items table.\n\nPlease run the SQL script in "supabase_schema_update.sql" in your Supabase SQL Editor to grant update permission.'
+        )
+      } else {
+        alert(err?.message || 'Could not update item status. Please try again.')
+      }
     } finally {
       setRecoveringId(null)
     }

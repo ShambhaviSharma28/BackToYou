@@ -1,0 +1,188 @@
+
+@import "tailwindcss";
+
+/* BACKTOYOU — MIDNIGHT PURPLE THEME */
+
+:root {
+  --color-bg: #101113;
+  --color-surface: #1B1D21;
+  --color-elevated: #282B30;
+
+  --color-text: #F5F5F0;
+  --color-muted: #A5A6A2;
+
+  --color-accent: #A78BFA;
+  --color-accent-hover: #8B5CF6;
+  --color-accent-soft: #2A2140;
+
+  --color-border: #35383D;
+
+  --color-lost: #F08080;
+  --color-lost-bg: #382426;
+
+  --color-found: #78CBA0;
+  --color-found-bg: #20372C;
+
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* PAGE BACKGROUNDS */
+
+[class~="bg-[#F8FAFF]"] {
+  background-color: var(--color-bg) !important;
+}
+
+[class~="bg-white"],
+[class~="bg-white/95"] {
+  background-color: var(--color-surface) !important;
+}
+
+[class~="bg-blue-600"] {
+  background-color: var(--color-accent) !important;
+}
+
+[class~="bg-blue-700"] {
+  background-color: var(--color-accent-hover) !important;
+}
+
+[class~="bg-blue-100"],
+[class~="bg-blue-50"] {
+  background-color: var(--color-accent-soft) !important;
+}
+
+/* ITEM CARD BACKGROUNDS */
+
+[class~="bg-amber-100"],
+[class~="bg-purple-100"],
+[class~="bg-pink-100"],
+[class~="bg-green-100"],
+[class~="bg-orange-100"],
+[class~="bg-slate-100"] {
+  background-color: var(--color-elevated) !important;
+}
+
+/* HERO DECORATION */
+
+[class~="bg-blue-100/70"],
+[class~="bg-purple-100/60"] {
+  background-color: var(--color-accent-soft) !important;
+}
+
+/* TEXT COLOURS */
+
+[class~="text-[#24324A]"],
+[class~="text-slate-900"],
+[class~="text-slate-800"],
+[class~="text-slate-700"] {
+  color: var(--color-text) !important;
+}
+
+[class~="text-slate-600"],
+[class~="text-slate-500"],
+[class~="text-slate-400"] {
+  color: var(--color-muted) !important;
+}
+
+[class~="text-blue-600"],
+[class~="text-blue-700"],
+[class~="text-blue-500"] {
+  color: var(--color-accent) !important;
+}
+
+/* PRIMARY BUTTONS */
+
+[class~="bg-blue-600"] {
+  color: #101113 !important;
+}
+
+[class~="bg-blue-600"] [class~="text-white"],
+[class~="bg-blue-700"] [class~="text-white"] {
+  color: #101113 !important;
+}
+
+/* STATUS LABELS */
+
+[class~="bg-rose-100"] {
+  background-color: var(--color-lost-bg) !important;
+}
+
+[class~="text-rose-700"] {
+  color: var(--color-lost) !important;
+}
+
+[class~="bg-emerald-100"] {
+  background-color: var(--color-found-bg) !important;
+}
+
+[class~="text-emerald-700"] {
+  color: var(--color-found) !important;
+}
+
+/* BORDERS */
+
+[class~="border-slate-100"],
+[class~="border-slate-200"],
+[class~="border-slate-300"] {
+  border-color: var(--color-border) !important;
+}
+
+[class~="border-blue-100"],
+[class~="border-blue-200"] {
+  border-color: var(--color-accent-soft) !important;
+}
+
+/* INPUTS */
+
+input {
+  color: var(--color-text);
+}
+
+input::placeholder {
+  color: var(--color-muted);
+  opacity: 0.8;
+}
+
+/* HOVER STATES */
+
+[class~="hover:bg-blue-700"]:hover {
+  background-color: var(--color-accent-hover) !important;
+}
+
+[class~="hover:bg-blue-50"]:hover,
+[class~="hover:bg-slate-50"]:hover {
+  background-color: var(--color-elevated) !important;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ACCESSIBILITY */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}

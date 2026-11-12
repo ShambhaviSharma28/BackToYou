@@ -10,6 +10,9 @@ import {
   ArrowRight,
   Menu,
   X,
+  User,
+  Phone,
+  Mail,
 } from 'lucide-react'
 import CatMeme from './CatMeme'
 
@@ -24,6 +27,8 @@ type Item = {
   type: 'Lost' | 'Found'
   emoji: string
   color: string
+  reporterName?: string
+  contactInfo?: string
 }
 
 const categories = [
@@ -48,6 +53,8 @@ function App() {
   const [itemCategory, setItemCategory] = useState('Electronics')
   const [itemLocation, setItemLocation] = useState('')
   const [itemDescription, setItemDescription] = useState('')
+  const [reporterName, setReporterName] = useState('')
+  const [contactInfo, setContactInfo] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [showAuth, setShowAuth] = useState(false)
@@ -68,14 +75,36 @@ function App() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (user && showReport) {
+      if (!reporterName && (user.user_metadata?.full_name || user.user_metadata?.name)) {
+        setReporterName(user.user_metadata.full_name || user.user_metadata.name)
+      }
+      if (!contactInfo && user.email) {
+        setContactInfo(user.email)
+      }
+    }
+  }, [user, showReport])
+
   const loadItems = async () => {
     setIsLoading(true)
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('items')
-      .select('id, title, description, category, location, type, created_at')
+      .select('id, title, description, category, location, type, created_at, reporter_name, contact_info')
       .eq('status', 'open')
       .order('created_at', { ascending: false })
+
+    // If reporter_name or contact_info columns don't exist yet in Supabase schema, fallback cleanly
+    if (error && (error.message.includes('reporter_name') || error.message.includes('contact_info') || error.message.includes('column'))) {
+      const fallback = await supabase
+        .from('items')
+        .select('id, title, description, category, location, type, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+      data = fallback.data as any
+      error = fallback.error
+    }
 
     if (error) {
       console.error('Could not load items:', error.message)
@@ -83,21 +112,39 @@ function App() {
       return
     }
 
-    const formattedItems: Item[] = (data ?? []).map((item) => ({
-      id: item.id,
-      name: item.title,
-      description: item.description ?? '',
-      category: item.category,
-      location: item.location,
-      date: new Date(item.created_at).toLocaleDateString(),
-      type: item.type === 'found' ? 'Found' : 'Lost',
-      emoji:
-        item.category === 'Electronics' ? '🎧' :
-        item.category === 'Cards' ? '🪪' :
-        item.category === 'Bags' ? '🎒' :
-        item.category === 'Accessories' ? '⌚' : '📦',
-      color: 'bg-purple-100',
-    }))
+    const formattedItems: Item[] = (data ?? []).map((item: any) => {
+      let description = item.description ?? ''
+      let repName = item.reporter_name
+      let contact = item.contact_info
+
+      // Parse fallback format if reporter details were embedded in description
+      if (!repName && !contact) {
+        const contactMatch = description.match(/\[Reported by: (.*?) \| Contact: (.*?)\]/)
+        if (contactMatch) {
+          repName = contactMatch[1] !== 'Anonymous' ? contactMatch[1] : undefined
+          contact = contactMatch[2] !== 'N/A' ? contactMatch[2] : undefined
+          description = description.replace(/\n\n\[Reported by: .*? \| Contact: .*?\]/, '')
+        }
+      }
+
+      return {
+        id: item.id,
+        name: item.title,
+        description,
+        category: item.category,
+        location: item.location,
+        date: new Date(item.created_at).toLocaleDateString(),
+        type: item.type === 'found' ? 'Found' : 'Lost',
+        emoji:
+          item.category === 'Electronics' ? '🎧' :
+          item.category === 'Cards' ? '🪪' :
+          item.category === 'Bags' ? '🎒' :
+          item.category === 'Accessories' ? '⌚' : '📦',
+        color: 'bg-purple-100',
+        reporterName: repName,
+        contactInfo: contact,
+      }
+    })
 
     setItems(formattedItems)
     setIsLoading(false)
@@ -156,14 +203,20 @@ function App() {
       return
     }
 
-    if (!itemName.trim() || !itemLocation.trim() || !itemDescription.trim()) {
-      alert('Please fill in all fields.')
+    if (
+      !itemName.trim() ||
+      !itemLocation.trim() ||
+      !itemDescription.trim() ||
+      !reporterName.trim() ||
+      !contactInfo.trim()
+    ) {
+      alert('Please fill in all fields including your name and contact details.')
       return
     }
 
     setIsLoading(true)
     try {
-      const { error } = await supabase.from('items').insert({
+      const payload: Record<string, any> = {
         title: itemName.trim(),
         description: itemDescription.trim(),
         category: itemCategory,
@@ -171,14 +224,41 @@ function App() {
         type: reportType.toLowerCase(),
         status: 'open',
         created_by: user.id,
-      })
+        reporter_name: reporterName.trim(),
+        contact_info: contactInfo.trim(),
+      }
 
-      if (error) throw error
+      const { error } = await supabase.from('items').insert(payload)
+
+      if (error) {
+        // If columns don't exist yet in Supabase schema, safely fallback to embedding in description
+        if (
+          error.message.includes('reporter_name') ||
+          error.message.includes('contact_info') ||
+          error.message.includes('column')
+        ) {
+          const fallbackDesc = `${itemDescription.trim()}\n\n[Reported by: ${reporterName.trim()} | Contact: ${contactInfo.trim()}]`
+          const { error: fallbackError } = await supabase.from('items').insert({
+            title: itemName.trim(),
+            description: fallbackDesc,
+            category: itemCategory,
+            location: itemLocation.trim(),
+            type: reportType.toLowerCase(),
+            status: 'open',
+            created_by: user.id,
+          })
+          if (fallbackError) throw fallbackError
+        } else {
+          throw error
+        }
+      }
 
       setItemName('')
       setItemCategory('Electronics')
       setItemLocation('')
       setItemDescription('')
+      setReporterName('')
+      setContactInfo('')
       setShowReport(false)
       setCategory('All items')
       setType('All')
@@ -447,6 +527,15 @@ function App() {
             {item.location}
           </div>
 
+          {item.reporterName && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+              <User size={13} className="text-slate-400" />
+              <span>
+                Reported by <strong className="font-semibold text-slate-700">{item.reporterName}</strong>
+              </span>
+            </div>
+          )}
+
           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-4">
             <span className="flex items-center gap-1.5 text-xs text-slate-400">
               <Clock3 size={14} />
@@ -455,9 +544,10 @@ function App() {
 
             <button
               onClick={() => {
-  setSelectedItem(item)
-  setShowItemDetails(true)
-}}
+                setSelectedItem(item)
+                setShowItemDetails(true)
+              }}
+              className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
             >
               View details <ArrowRight size={14} />
             </button>
@@ -712,6 +802,37 @@ function App() {
             className="w-full resize-none rounded-xl border border-[#35383D] bg-[#282B30] p-3 text-white outline-none focus:border-[#A78BFA]"
           />
         </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm text-[#F5F5F0]">
+              Your Name
+            </label>
+            <input
+              required
+              value={reporterName}
+              onChange={(e) => setReporterName(e.target.value)}
+              placeholder="e.g. Alex Sharma"
+              className="w-full rounded-xl border border-[#35383D] bg-[#282B30] p-3 text-white outline-none focus:border-[#A78BFA]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm text-[#F5F5F0]">
+              Contact Details
+            </label>
+            <input
+              required
+              value={contactInfo}
+              onChange={(e) => setContactInfo(e.target.value)}
+              placeholder="Phone, WhatsApp, or email"
+              className="w-full rounded-xl border border-[#35383D] bg-[#282B30] p-3 text-white outline-none focus:border-[#A78BFA]"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-[#A5A6A2]">
+          This allows students to reach you directly to claim or hand over the item.
+        </p>
       </div>
 
       <button
@@ -763,20 +884,81 @@ function App() {
   {selectedItem.description}
 </p>
 
-            <div className="space-y-4 text-sm text-[#A5A6A2]">
+            <div className="space-y-3 text-sm text-[#A5A6A2]">
               <p>
                 <strong className="text-[#F5F5F0]">Status:</strong> {selectedItem.type}
-                </p>
+              </p>
               <p>
-    <strong className="text-[#F5F5F0]">Category:</strong> {selectedItem.category}
-  </p>
-  <p>
-    <strong className="text-[#F5F5F0]">Location:</strong> {selectedItem.location}
-  </p>
-  <p>
-    <strong className="text-[#F5F5F0]">Reported:</strong> {selectedItem.date}
-  </p>
-</div>
+                <strong className="text-[#F5F5F0]">Category:</strong> {selectedItem.category}
+              </p>
+              <p>
+                <strong className="text-[#F5F5F0]">Location:</strong> {selectedItem.location}
+              </p>
+              <p>
+                <strong className="text-[#F5F5F0]">Reported:</strong> {selectedItem.date}
+              </p>
+            </div>
+
+            {/* Reporter details card */}
+            <div className="mt-5 rounded-xl border border-[#35383D] bg-[#282B30] p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#A78BFA]">
+                {selectedItem.type === 'Found' ? 'Found & Reported By' : 'Lost & Reported By'}
+              </p>
+              <div className="mt-2.5 space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-[#F5F5F0]">
+                  <User size={15} className="text-[#A78BFA]" />
+                  <span>
+                    <strong className="text-slate-400">Name:</strong>{' '}
+                    {selectedItem.reporterName || 'Anonymous / Not specified'}
+                  </span>
+                </div>
+                {selectedItem.contactInfo && (
+                  <div className="flex items-center gap-2 text-[#F5F5F0]">
+                    {selectedItem.contactInfo.includes('@') ? (
+                      <Mail size={15} className="text-[#A78BFA]" />
+                    ) : (
+                      <Phone size={15} className="text-[#A78BFA]" />
+                    )}
+                    <span>
+                      <strong className="text-slate-400">Contact:</strong>{' '}
+                      <span className="font-medium text-white">{selectedItem.contactInfo}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {selectedItem.contactInfo && (
+                <div className="mt-4 flex gap-2">
+                  {selectedItem.contactInfo.includes('@') ? (
+                    <a
+                      href={`mailto:${selectedItem.contactInfo}?subject=${encodeURIComponent(
+                        `BackToYou: Regarding "${selectedItem.name}"`
+                      )}`}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#A78BFA] px-4 py-2.5 text-xs font-bold text-black transition hover:bg-[#8B5CF6]"
+                    >
+                      <Mail size={14} /> Send Email
+                    </a>
+                  ) : (
+                    <>
+                      <a
+                        href={`tel:${selectedItem.contactInfo}`}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#A78BFA] px-4 py-2.5 text-xs font-bold text-black transition hover:bg-[#8B5CF6]"
+                      >
+                        <Phone size={14} /> Call
+                      </a>
+                      <a
+                        href={`https://wa.me/${selectedItem.contactInfo.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-400 transition hover:bg-emerald-500/20"
+                      >
+                        WhatsApp
+                      </a>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             
 
             <button

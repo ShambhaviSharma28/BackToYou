@@ -494,20 +494,20 @@ function App() {
     {filteredItems.map((item) => (
       <article
         key={item.id}
-        className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60"
+        className="group overflow-hidden rounded-2xl border border-[#C8D9E6] bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#2F4156]/10"
       >
         <div
-          className={`relative flex h-44 items-center justify-center ${item.color}`}
+          className="relative flex h-44 items-center justify-center border-b border-[#C8D9E6]/60 bg-[#E3EDF4] transition duration-200 group-hover:bg-[#D8E6F0]"
         >
           <span className="text-7xl transition duration-300 group-hover:scale-110">
             {item.emoji}
           </span>
 
           <span
-            className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${
+            className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${
               item.type === 'Lost'
-                ? 'bg-rose-100 text-rose-700'
-                : 'bg-emerald-100 text-emerald-700'
+                ? 'border border-[#C05638]/30 bg-[#FDF0EC] text-[#C05638]'
+                : 'border border-[#567C8D]/30 bg-white text-[#567C8D]'
             }`}
           >
             {item.type}
@@ -516,16 +516,16 @@ function App() {
 
         <div className="p-5">
           <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-lg font-bold text-[#2F4156]">
               {item.name}
             </h3>
 
-            <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">
+            <span className="shrink-0 rounded-md border border-[#C8D9E6] bg-[#F5EFEB] px-2 py-1 text-[10px] font-bold text-[#567C8D]">
               {item.category}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2 text-sm text-[#567C8D]">
             <MapPin size={15} />
             {item.location}
           </div>
@@ -870,7 +870,7 @@ function App() {
               </button>
             </div>
 
-            <div className="mb-5 flex h-44 items-center justify-center overflow-hidden rounded-xl bg-[#F5EFEB]">
+            <div className="mb-5 flex h-44 items-center justify-center overflow-hidden rounded-xl border border-[#C8D9E6] bg-[#E3EDF4]">
   {selectedItem.image ? (
     <img
       src={selectedItem.image}
